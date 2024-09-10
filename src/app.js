@@ -12,6 +12,11 @@ app.use(express.json());
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 
+// Ruta para la raíz
+app.get('/', (req, res) => {
+    res.send('Servidor de API funcionando. Usa /api/products o /api/carts.');
+});
+
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
