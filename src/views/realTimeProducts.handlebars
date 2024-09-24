@@ -8,52 +8,104 @@
 </head>
 <body>
     <h1>Productos en Tiempo Real</h1>
-    <ul id="product-list"></ul>
+    <ul id="product-list">
+        {{#each products}}
+            <li>{{title}} - ${{price}} (ID: {{id}})</li>
+        {{/each}}
+    </ul>
+
 
     <h2>Añadir Producto</h2>
     <form id="product-form">
+        <input type="number" id="id" placeholder="ID" required />
         <input type="text" id="title" placeholder="Título" required />
         <input type="number" id="price" placeholder="Precio" required />
         <button type="submit">Agregar Producto</button>
     </form>
 
     <h2>Eliminar Producto</h2>
-    <form id="delete-form">
-        <input type="number" id="delete-id" placeholder="ID del Producto" required />
-        <button type="submit">Eliminar Producto</button>
-    </form>
+<form id="delete-form">
+    <select id="delete-id" required>
+        <option value="">Selecciona un producto para eliminar</option>
+        {{#each products}}
+            <option value="{{id}}">{{title}} - ID: {{id}}</option>
+        {{/each}}
+    </select>
+    <button type="submit">Eliminar Producto</button>
+</form>
+
 
     <script>
         const socket = io();
 
-        // Actualizar la lista de productos cuando llega un evento 'productList'
-        socket.on('productList', (products) => {
-            const productList = document.getElementById('product-list');
-            productList.innerHTML = '';
-            products.forEach(product => {
-                const li = document.createElement('li');
-                li.textContent = `${product.title} - $${product.price}`;
-                productList.appendChild(li);
-            });
-        });
+// Actualizar la lista de productos cuando llega un evento 'productList'
+socket.on('productList', (products) => {
+    const productList = document.getElementById('product-list');
+    productList.innerHTML = '';
+    products.forEach(product => {
+        const li = document.createElement('li');
+        li.textContent = `${product.title} - $${product.price} (ID: ${product.id})`;
+        productList.appendChild(li);
+    });
+    const deleteSelect = document.getElementById('delete-id');
+    deleteSelect.innerHTML = '<option value="">Selecciona un producto para eliminar</option>';
+    products.forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.id; // El valor es el ID del producto
+        option.textContent = `${product.title} - ID: ${product.id}`;
+        deleteSelect.appendChild(option); // Agregar opción al select
+    });
+});
 
-        // Enviar nuevo producto a través de WebSocket
-        const productForm = document.getElementById('product-form');
-        productForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const title = document.getElementById('title').value;
-            const price = document.getElementById('price').value;
+// Enviar nuevo producto a través de WebSocket
+const productForm = document.getElementById('product-form');
+productForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = document.getElementById('id').value;
+    const title = document.getElementById('title').value;
+    const price = document.getElementById('price').value;
 
-            socket.emit('newProduct', { title, price });
-        });
+    socket.emit('newProduct', { id, title, price });
+    
+});
 
-        // Enviar ID de producto para eliminar a través de WebSocket
-        const deleteForm = document.getElementById('delete-form');
-        deleteForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const productId = document.getElementById('delete-id').value;
-            socket.emit('deleteProduct', parseInt(productId));
-        });
+// Enviar ID de producto para eliminar a través de WebSocket
+const deleteForm = document.getElementById('delete-form');
+deleteForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const productId = document.getElementById('delete-id').value;
+
+    // Emitir evento para eliminar el producto
+    socket.emit('deleteProduct', parseInt(productId));
+});
+
+io.on('connection', (socket) => {
+    console.log('Nuevo cliente conectado');
+
+    // Emitir lista de productos cuando un cliente se conecta
+    socket.emit('productList', getProducts());
+
+    // Escuchar eventos de creación y eliminación de productos
+    socket.on('newProduct', (product) => {
+        const products = getProducts();
+        products.push(product);
+        saveProducts(products);
+
+        // Emitir la lista de productos actualizada a todos los clientes
+        io.emit('productList', products);
+    });
+
+    socket.on('deleteProduct', (productId) => {
+        let products = getProducts();
+        products = products.filter(p => p.id !== productId);
+        saveProducts(products);
+
+        // Emitir la lista de productos actualizada
+        io.emit('productList', products);
+    });
+});
+
+
     </script>
 </body>
 </html>

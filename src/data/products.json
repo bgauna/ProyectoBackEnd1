@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "title": "Zapatishas Abibas",
+    "price": "30000"
+  },
+  {
+    "title": "Sapatishas Alta Flama",
+    "price": "35000"
+  },
+  {
+    "title": "Zapatishas Abibas 2",
+    "price": "30000"
+  },
+  {
+    "title": "Zapatishas Abibas 3",
+    "price": "20000"
+  },
+  {
+    "id": "1",
+    "title": "Zapatishas Abibas 4",
+    "price": "20000"
+  }
+]
